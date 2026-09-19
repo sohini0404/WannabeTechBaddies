@@ -1,0 +1,6 @@
+{
+  "name": "FlowShield - Flood Simulation & Early Warning Dashboard",
+  "description": "Real-time flood simulation, multi-level severity risk assessment, early warning alerts, community hazard reporting, and official relief fund donations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

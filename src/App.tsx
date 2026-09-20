@@ -10,37 +10,32 @@ import { AffectedPopulationPage } from "./components/AffectedPopulationPage";
 import { SafetyGuidelinesPage } from "./components/SafetyGuidelinesPage";
 import { NgoReliefDonationsPage } from "./components/NgoReliefDonationsPage";
 import { SignInModal } from "./components/SignInModal";
+import { AuthModal } from "./components/AuthModal";
+import { useAuth } from "./contexts/AuthContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Waves, HeartHandshake, PhoneCall, ShieldCheck } from "lucide-react";
 import waterBgUrl from "./assets/images/water_caustics_bg_1789844586208.jpg";
 
+// Pages that a visitor must be signed in to open.
+const PROTECTED_PAGES: AppPage[] = [
+  "severity-graph",
+  "simulations",
+  "affected-population",
+  "safety-measures"
+];
+
 export default function App() {
-  // User state with local persistence
-  const [user, setUser] = useState<UserProfile>(() => {
-    const saved = localStorage.getItem("flowshield_user");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    return {
-      name: "Sohini Pallapothu",
-      email: "sohinipallapothu@gmail.com",
-      phone: "+91 98765 43210",
-      role: "Citizen",
-      location: "Silchar, Assam",
-      smsAlertsEnabled: true,
-      isSignedIn: true
-    };
-  });
+  // Auth-backed user profile (Firebase Auth + Firestore `users` collection).
+  const { profile: user, isAuthenticated, updateProfile, logout } = useAuth();
 
   const [currentPage, setCurrentPage] = useState<AppPage>("check-location");
   const [selectedState, setSelectedState] = useState<IndianState | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<DistrictInfo | null>(null);
   const [activeScenarioKey, setActiveScenarioKey] = useState<SimulationScenarioKey>("normal");
   const [isSignInOpen, setIsSignInOpen] = useState<boolean>(false);
+  const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false);
+  // A protected page the user tried to open before signing in.
+  const [pendingPage, setPendingPage] = useState<AppPage | null>(null);
 
   // Helper to ensure window & document scroll position resets to the very top
   const scrollToTop = () => {
@@ -50,9 +45,43 @@ export default function App() {
   };
 
   const handleNavigate = (page: AppPage) => {
+    // Gate protected pages behind authentication.
+    if (PROTECTED_PAGES.includes(page) && !isAuthenticated) {
+      setPendingPage(page);
+      setIsAuthOpen(true);
+      return;
+    }
     scrollToTop();
     setCurrentPage(page);
   };
+
+  // When the navbar profile button is pressed, show the auth modal for
+  // signed-out visitors and the profile editor for signed-in users.
+  const handleOpenProfileOrAuth = () => {
+    if (isAuthenticated) {
+      setIsSignInOpen(true);
+    } else {
+      setPendingPage(null);
+      setIsAuthOpen(true);
+    }
+  };
+
+  // After a successful sign-in, continue to any page the user was trying to reach.
+  React.useEffect(() => {
+    if (isAuthenticated && pendingPage) {
+      const target = pendingPage;
+      setPendingPage(null);
+      scrollToTop();
+      setCurrentPage(target);
+    }
+  }, [isAuthenticated, pendingPage]);
+
+  // If the user signs out while viewing a protected page, return them home.
+  React.useEffect(() => {
+    if (!isAuthenticated && PROTECTED_PAGES.includes(currentPage)) {
+      setCurrentPage("check-location");
+    }
+  }, [isAuthenticated, currentPage]);
 
   // Whenever currentPage changes, ensure the newly opened page starts from the very top
   React.useEffect(() => {
@@ -70,30 +99,26 @@ export default function App() {
     };
   }, [currentPage]);
 
-  // Persist user changes
+  // Persist user changes to Firebase Auth + the Firestore `users` collection.
   const handleSaveUser = (updatedUser: UserProfile) => {
-    setUser(updatedUser);
-    localStorage.setItem("flowshield_user", JSON.stringify(updatedUser));
+    void updateProfile(updatedUser);
   };
 
   const handleUpdatePartialUser = (partial: Partial<UserProfile>) => {
-    const updated = { ...user, ...partial };
-    handleSaveUser(updated);
+    void updateProfile(partial);
   };
 
   // Called from CheckLocationPage
   const handleCheckSeverity = (state: IndianState, district: DistrictInfo) => {
     setSelectedState(state);
     setSelectedDistrict(district);
-    scrollToTop();
-    setCurrentPage("severity-graph"); // Step 1
+    handleNavigate("severity-graph"); // Step 1 (protected)
   };
 
   const handleOpenSimulations = (state: IndianState, district: DistrictInfo) => {
     setSelectedState(state);
     setSelectedDistrict(district);
-    scrollToTop();
-    setCurrentPage("simulations"); // Step 2
+    handleNavigate("simulations"); // Step 2 (protected)
   };
 
   // Compute telemetry if district is active
@@ -123,7 +148,7 @@ export default function App() {
         currentPage={currentPage}
         setCurrentPage={handleNavigate}
         user={user}
-        onOpenSignIn={() => setIsSignInOpen(true)}
+        onOpenSignIn={handleOpenProfileOrAuth}
         hasSeverityAssessed={!!(selectedState && selectedDistrict)}
         activeLocationLabel={
           selectedDistrict && selectedState
@@ -264,6 +289,19 @@ export default function App() {
         onClose={() => setIsSignInOpen(false)}
         currentUser={user}
         onSaveUser={handleSaveUser}
+        onLogout={() => {
+          void logout();
+          setIsSignInOpen(false);
+        }}
+      />
+
+      {/* Authentication Modal (email/password + Google) */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => {
+          setIsAuthOpen(false);
+          setPendingPage(null);
+        }}
       />
     </div>
   );

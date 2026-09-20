@@ -8,6 +8,8 @@ import {
   INITIAL_COMMUNITY_WARNINGS 
 } from "../data/floodData";
 import { DistrictTelemetryData } from "../data/telemetryEngine";
+import { addFloodReport, subscribeToFloodReports } from "../services/reports";
+import { useAuth } from "../contexts/AuthContext";
 import {
   ArrowLeft,
   ArrowRight,
@@ -48,6 +50,8 @@ export const SafetyGuidelinesPage: React.FC<SafetyGuidelinesPageProps> = ({
     if (document.body) document.body.scrollTop = 0;
   }, []);
 
+  const { firebaseUser } = useAuth();
+
   const [completedMeasures, setCompletedMeasures] = useState<Record<string, boolean>>({});
   const [copiedPhone, setCopiedPhone] = useState<string | null>(null);
 
@@ -60,6 +64,17 @@ export const SafetyGuidelinesPage: React.FC<SafetyGuidelinesPageProps> = ({
   const [warningDesc, setWarningDesc] = useState<string>("");
   const [urgentHelp, setUrgentHelp] = useState<boolean>(telemetry.severityLevel === 3);
   const [broadcastSuccess, setBroadcastSuccess] = useState<boolean>(false);
+
+  // Stream stored reports from the `flood_reports` collection and merge them
+  // ahead of the seeded demo warnings. Falls back silently if offline.
+  React.useEffect(() => {
+    const unsubscribe = subscribeToFloodReports((reports) => {
+      if (reports.length > 0) {
+        setCommunityWarnings([...reports, ...(INITIAL_COMMUNITY_WARNINGS as any)]);
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   const severityData = SEVERITY_MEASURES[telemetry.severityLevel];
 
@@ -110,12 +125,32 @@ export const SafetyGuidelinesPage: React.FC<SafetyGuidelinesPageProps> = ({
       urgentHelpRequested: urgentHelp
     };
 
+    // Optimistically show the report immediately; the Firestore subscription
+    // will reconcile with the persisted copy once it round-trips.
     setCommunityWarnings([newReport, ...communityWarnings]);
     setIsWarningFormOpen(false);
     setStreetLandmark("");
     setWarningDesc("");
     setBroadcastSuccess(true);
     setTimeout(() => setBroadcastSuccess(false), 4000);
+
+    // Persist to the `flood_reports` collection. Fire-and-forget so a slow
+    // network never blocks the existing UI feedback.
+    void addFloodReport(
+      {
+        authorName: newReport.authorName,
+        authorRole: newReport.authorRole,
+        location: newReport.location,
+        state: selectedState.name,
+        district: selectedDistrict.name,
+        severityLevel: newReport.severityLevel,
+        waterDepthCm: newReport.waterDepthCm,
+        hazardType: newReport.hazardType,
+        description: newReport.description,
+        urgentHelpRequested: newReport.urgentHelpRequested
+      },
+      firebaseUser?.uid ?? null
+    );
   };
 
   return (

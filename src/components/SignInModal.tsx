@@ -7,13 +7,15 @@ interface SignInModalProps {
   onClose: () => void;
   currentUser: UserProfile;
   onSaveUser: (user: UserProfile) => void;
+  onLogout?: () => void;
 }
 
 export const SignInModal: React.FC<SignInModalProps> = ({
   isOpen,
   onClose,
   currentUser,
-  onSaveUser
+  onSaveUser,
+  onLogout
 }) => {
   const [name, setName] = useState(currentUser.name || "");
   const [email, setEmail] = useState(currentUser.email || "");
@@ -163,6 +165,16 @@ export const SignInModal: React.FC<SignInModalProps> = ({
               Save Profile Details
             </button>
           </div>
+
+          {onLogout && (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="w-full py-2.5 bg-white hover:bg-[#FEF2F2] border-2 border-[#E2D5C3] hover:border-[#FECACA] text-[#991B1B] text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+            >
+              Sign Out
+            </button>
+          )}
         </form>
       </div>
     </div>

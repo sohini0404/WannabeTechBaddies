@@ -1,0 +1,22 @@
+1. Frontend Tech Stack
+Framework & Build Tool: React 19 with Vite 6 and TypeScript (tsx).
+Styling & Layout: Tailwind CSS v4 (@tailwindcss/vite) utilizing utility classes, frosted glass backdrops, responsive grid layouts, and accessible contrast palettes.
+3D Visualizations & Simulations: Three.js (three) for interactive 3D terrain models, animated procedural water shaders, wave oscillations, building models, and dynamic flood depth planes.
+Animations: Motion (motion/react) for fluid view transitions and interactive UI feedback.
+Icons: Lucide React (lucide-react) for iconography.
+QR Code Engine: qrcode for rendering real-time UPI payment QR codes for verified disaster relief funds.
+2. Backend & Server Architecture
+Runtime & Server: Node.js with Express (express v4.21) operating in full-stack mode.
+Integration: Vite runs in middlewareMode during development; production bundles the server via esbuild into dist/server.cjs.
+Environment Security: Handled via dotenv with server-side proxy routes to ensure API credentials are never exposed to the client.
+3. APIs & Machine Learning Models
+A. Google Gemini API (@google/genai SDK)
+Model: gemini-3.8-flash
+Endpoint: POST /api/ai-mitigation
+Function: Evaluates real-time flood telemetry (water level, rainfall intensity, drainage capacity, terrain elevation, and clogged drainage sectors) to generate structured tactical mitigation plans, crest time estimates, and citizen advisories.
+Resilience: Features a zero-crash, deterministic rule-based hydrological fallback engine that operates seamlessly if offline or when quota limits are reached.
+B. Hydrological Telemetry & Simulation Engine (Internal API)
+Telemetry & Severity Engine (/src/data/telemetryEngine.ts): Computes a 5-metric composite Hydrological Risk Score (0–100) based on rainfall intensity, initial water gauge depth, culvert/drainage capacity, upstream inflow, and downstream discharge.
+Demographic Impact Engine: Calculates affected population segments (seniors, children, displaced households, livestock, and critical infrastructure) dynamically adjusted across simulation scenarios (Normal, Heavy Rainfall, and Drainage Failure).
+C. Payment / Relief API
+Unified Payments Interface (UPI): Uses the upi://pay URI specification for generating verifiable donation QR codes and deep links to verified organizations (Goonj Rahat, SEEDS India, Chief Minister's Relief Fund).

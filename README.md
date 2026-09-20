@@ -22,7 +22,7 @@ FlowShield aims to bridge this gap by providing:
 
 ---
 
-## ✨ Features
+## Features
 
 ### Location-Based Analysis
 - State selection

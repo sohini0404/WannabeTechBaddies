@@ -1,0 +1,63 @@
+The flood severity levels in the application are determined using a hydrological risk assessment model that synthesizes data patterns and benchmarks from official Indian disaster management and meteorological authorities:
+
+
+1. Primary Data Sources & Benchmarks
+Central Water Commission (CWC) River Telemetry Guidelines:
+River gauge flood thresholds (Low, Warning Level, Danger Level, Highest Flood Level / HFL).
+Inflow and outflow dynamics across major river basins (Brahmaputra, Barak, Ganga, Godavari, Krishna, Mahanadi, Narmada, Yamuna, etc.) and major barrages (e.g., Dowleswaram, Prakasam, Farakka).
+Embankment breach histories and historical vulnerable flood points (e.g., Bethukandi dyke in Cachar/Silchar, Budameru diversion channel in Vijayawada, Bharalu channel in Guwahati).
+India Meteorological Department (IMD) Precipitation Standards:
+Standard rainfall intensity scales (
+):
+Normal Showers: 
+Heavy Rainfall: 
+Very Heavy / Cloudburst Conditions: 
+National Disaster Management Authority (NDMA) & State Disaster Management Authorities (SDMAs):
+Multi-hazard district vulnerability profiles and flood hazard zonation across all 28 States and 8 Union Territories.
+Standard 3-tier severity classification (Level 1: Safe, Level 2: Warning, Level 3: Critical).
+Official emergency dispatch contacts (NDRF 1078, SDMA 1070, DDMA 1077, ERSS 112).
+Census of India & Disaster Management Demographics:
+District population baselines (averaging 600,000 to 2.4 million residents).
+Demographic vulnerability distributions: vulnerable pediatric population (
+ yrs: ~16%), senior citizens (
+ yrs: ~12%), and household displacement sizes (~4.4 members per household).
+CPHEEO (Central Public Health and Environmental Engineering Organisation):
+Urban stormwater drainage benchmarks, runoff coefficients, and culvert siltation/choke metrics (comparing normal 
+ clearance to catastrophic 
+ clearance during drainage failure).
+
+
+
+2. How Severity Level is Calculated
+The calculation engine (/src/data/telemetryEngine.ts) evaluates 5 hydrological telemetry parameters:
+Initial Water Gauge Depth (
+) (30% weight):
+Level 1 (Safe): 
+Level 2 (Warning): 
+Level 3 (Critical): 
+ (inundation threshold)
+Rainfall Intensity (
+) (25% weight):
+Measures current or simulated downpour rate against catchment soil absorption limits.
+Catchment Inflow vs. Sluice Outflow Net Surplus (
+) (25% weight):
+Calculates net accumulation 
+. If discharge capacity is exceeded, positive surplus rapidly builds up hydraulic head.
+Drainage & Culvert Capacity (
+) (20% weight):
+Assesses stormwater clearance efficiency vs. siltation and solid waste blockages.
+Physical Embankment & Breach Vulnerability:
+Evaluates district-specific vulnerabilities (e.g., river bund status, low causeways, tidal locks, or canal overflows).
+
+
+
+3. Classification Thresholds
+Level 1: Safe (Score 
+): Water depth 
+, balanced outflow, storm drains clearing runoff normally.
+Level 2: Warning (Score 
+): Water depth 
+, strained drainage, vehicle stalls, ground floor accumulation risk.
+Level 3: Critical (Score 
+): Water depth 
+, intense inflow surplus, submerged ground floors, evacuation required.

@@ -28,7 +28,7 @@ export default function App() {
     return {
       name: "Enter Your Name",
       email: "abc@gmail.com",
-      phone: "+91 xxxxx",
+      phone: "+91 xxxxx xxxxx",
       role: "Citizen",
       location: "Select Your Location",
       smsAlertsEnabled: true,

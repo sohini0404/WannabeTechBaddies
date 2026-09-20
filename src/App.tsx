@@ -26,11 +26,11 @@ export default function App() {
       }
     }
     return {
-      name: "Sohini Pallapothu",
-      email: "sohinipallapothu@gmail.com",
-      phone: "+91 98765 43210",
+      name: "Enter Your Name",
+      email: "abc@gmail.com",
+      phone: "+91 xxxxx",
       role: "Citizen",
-      location: "Silchar, Assam",
+      location: "Select Your Location",
       smsAlertsEnabled: true,
       isSignedIn: true
     };

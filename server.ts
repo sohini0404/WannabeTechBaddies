@@ -210,6 +210,64 @@ function getRuleBasedMitigations(
     };
   }
 }
+import express from "express";
+import cors from "cors";
+import fs from "fs";
+import path from "path";
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const DB_FILE = path.join(__dirname, "users.json");
+
+// Helper to read users list
+const getUsersFromFile = (): any[] => {
+  if (!fs.existsSync(DB_FILE)) return [];
+  try {
+    return JSON.parse(fs.readFileSync(DB_FILE, "utf-8") || "[]");
+  } catch (err) {
+    return [];
+  }
+};
+
+// 1. Endpoint to Save or Update User
+app.post("/api/user", (req, res) => {
+  const userData = req.body;
+
+  if (!userData?.email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+
+  const users = getUsersFromFile();
+  const existingIndex = users.findIndex((u) => u.email === userData.email);
+
+  if (existingIndex >= 0) {
+    users[existingIndex] = { ...users[existingIndex], ...userData };
+  } else {
+    users.push(userData);
+  }
+
+  fs.writeFileSync(DB_FILE, JSON.stringify(users, null, 2), "utf-8");
+  return res.json({ success: true, user: userData });
+});
+
+// 2. Endpoint to Retrieve User by Email
+app.get("/api/user/:email", (req, res) => {
+  const users = getUsersFromFile();
+  const user = users.find((u) => u.email === req.params.email);
+
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  return res.json(user);
+});
+
+const PORT = 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
 
 startServer().catch((err) => {
   console.error("Failed to start FlowShield server:", err);
